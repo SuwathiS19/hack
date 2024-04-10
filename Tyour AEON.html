@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Features</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-image: url('back.jpg'); /* Replace 'back.jpg' with the path to your image */
+    background-size: cover;
+    background-position: center;
+  }
+
+  .container {
+    width: 90%;
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color:rgba(5, 39, 78, 0.7); /* Adjust the alpha value as needed */
+    color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(36, 205, 36, 0.1);
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    text-align: center;
+  }
+
+  h1 {
+    text-align: center;
+    color: #e4d7d7;
+  }
+
+  .button-container {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  button {
+    display: inline-block;
+    background-color: #3c84cc;
+    color: #fff;
+    padding: 15px 30px;
+    text-decoration: none;
+    border-radius: 30px;
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+    margin-right: 20px;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  }
+
+  button:hover {
+    background-color: #081108;
+  }
+
+  #textInput {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+  #voiceInput {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>TRY AEON FEATURES</h1>
+
+  <div class="button-container">
+    <button onclick="startVoiceToText()">Voice to Text</button>
+  </div>
+
+  <div class="button-container">
+    <button onclick="startTextToVoice()">Text to Voice</button>
+  </div>
+
+  <div class="button-container">
+    <button onclick="setReminder()">Set Reminder</button>
+  </div>
+
+  <div class="button-container">
+    <button onclick="startTranslation()">Translation</button>
+  </div>
+
+  <textarea id="textInput" rows="4" placeholder="Enter text here"></textarea>
+  <textarea id="voiceInput" rows="4" placeholder="Transcribed text will appear here"></textarea>
+</div>
+
+<script>
+  function startVoiceToText() {
+    let recognition = new webkitSpeechRecognition() || new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = function(event) {
+      let result = event.results[event.results.length - 1][0].transcript;
+      document.getElementById('voiceInput').value = result;
+    };
+
+    recognition.onerror = function(event) {
+      console.error('Speech recognition error detected: ' + event.error);
+    };
+
+    recognition.start();
+  }
+
+  function startTextToVoice() {
+    let text = prompt("Enter the text you want to convert to speech:");
+    
+    if (text !== null && text.trim() !== "") {
+        document.getElementById('textInput').value = text;
+        
+        let utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-GB'; // Specifying UK English
+        window.speechSynthesis.speak(utterance);
+    } else {
+        alert('Please enter some text.');
+    }
+  }
+
+  function setReminder() {
+    let meetingName = prompt("Enter the meeting name:");
+    let meetingTime = prompt("Enter the meeting time (e.g., 10:00 AM):");
+    
+    if (meetingName !== null && meetingTime !== null && meetingName.trim() !== "" && meetingTime.trim() !== "") {
+        // Split the meeting time into hours and minutes
+        let timeParts = meetingTime.split(':');
+        let hours = parseInt(timeParts[0]);
+        let minutes = parseInt(timeParts[1]);
+        
+        // Get the current time
+        let currentTime = new Date();
+        let currentHours = currentTime.getHours();
+        let currentMinutes = currentTime.getMinutes();
+        
+        // Calculate the milliseconds until the reminder time
+        let millisecondsUntilReminder = ((hours - currentHours) * 60 + (minutes - currentMinutes)) * 60000;
+        
+        // Set a timeout to trigger the reminder
+        setTimeout(function() {
+            alert('Reminder: ' + meetingName);
+        }, millisecondsUntilReminder);
+        
+        alert('Reminder set for ' + meetingName + ' at ' + meetingTime);
+    } else {
+        alert('Please enter both meeting name and time.');
+    }
+  }
+
+  function startTranslation() {
+    let textToTranslate = document.getElementById('textInput').value;
+    let targetLanguage = prompt("Enter the target language (e.g., es for Spanish):");
+
+    if (textToTranslate.trim() !== "" && targetLanguage.trim() !== "") {
+        fetch('https://translation.googleapis.com/language/translate/v2?key=YOUR_API_KEY', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                q: textToTranslate,
+                target: targetLanguage
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.data && data.data.translations && data.data.translations.length > 0) {
+                let translatedText = data.data.translations[0].translatedText;
+                document.getElementById('voiceInput').value = translatedText;
+                alert('Translation: ' + translatedText);
+            } else {
+                alert('Translation failed.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while translating.');
+        });
+    } else {
+        alert('Please enter both text and target language.');
+    }
+  }
+</script>
+
+</body>
+</html>
